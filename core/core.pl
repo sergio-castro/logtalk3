@@ -2167,7 +2167,7 @@ logtalk_compile(Files, Flags) :-
 
 '$lgt_reset_directory_and_warnings_counter'(Goal) :-
 	(	'$lgt_pp_warnings_top_goal_directory_'(Goal, Directory) ->
-		'$lgt_change_directory'(Directory)
+		'$lgt_compiler_change_directory'(Directory)
 	;	true
 	),
 	'$lgt_reset_warnings_counter'.
@@ -2183,7 +2183,7 @@ logtalk_compile(Files, Flags) :-
 	(	'$lgt_pp_warnings_top_goal_directory_'(_, _) ->
 		% not top compilation/loading goal; do nothing
 		true
-	;	'$lgt_current_directory'(Directory),
+	;	'$lgt_compiler_working_directory'(Directory),
 		% remember top compilation/loading goal and directory
 		assertz('$lgt_pp_warnings_top_goal_directory_'(Goal, Directory)),
 		% initialize compilation warnings counter
@@ -2975,7 +2975,7 @@ create_logtalk_flag(Flag, Value, Options) :-
 % versions, 'rcN' for release candidates (with N being a natural number),
 % and 'stable' for stable versions
 
-'$lgt_version_data'(logtalk(3, 9, 3, rc3)).
+'$lgt_version_data'(logtalk(3, 9, 3, rc4)).
 
 
 
@@ -5702,8 +5702,8 @@ create_logtalk_flag(Flag, Value, Options) :-
 	assertz('$lgt_pp_file_paths_flags_'(Basename, Directory, SourceFile, ObjectFile, Flags)),
 	% change the current directory to the directory of the file being loaded as it can
 	% be a loader file loading other files in its directory using a relative path
-	'$lgt_current_directory'(Current),
-	'$lgt_change_directory'(Directory),
+	'$lgt_compiler_working_directory'(Current),
+	'$lgt_compiler_change_directory'(Directory),
 	(	'$lgt_loaded_file_'(Basename, Directory, PreviousMode, PreviousFlags, _, _, LoadingTimeStamp),
 		\+ '$lgt_failed_file_'(SourceFile) ->
 		% we're attempting to reload a file
@@ -5735,7 +5735,7 @@ create_logtalk_flag(Flag, Value, Options) :-
 		'$lgt_compile_and_load_file'(SourceFile, Flags, ObjectFile, Current),
 		'$lgt_print_message'(comment(loading), core, loaded_file(SourceFile, Flags))
 	),
-	'$lgt_change_directory'(Current).
+	'$lgt_compiler_change_directory'(Current).
 
 
 '$lgt_compile_and_load_file'(SourceFile, Flags, ObjectFile, Current) :-
@@ -6001,7 +6001,7 @@ create_logtalk_flag(Flag, Value, Options) :-
 '$lgt_compile_file'(SourceFile, ObjectFile, Flags, Action, Directory) :-
 	(	'$lgt_compile_file'(SourceFile, ObjectFile, Flags, Action) ->
 		retractall('$lgt_failed_file_'(SourceFile))
-	;	'$lgt_change_directory'(Directory),
+	;	'$lgt_compiler_change_directory'(Directory),
 		assertz('$lgt_failed_file_'(SourceFile)),
 		'$lgt_propagate_failure_to_parent_files'(SourceFile),
 		fail
@@ -6076,7 +6076,15 @@ create_logtalk_flag(Flag, Value, Options) :-
 
 '$lgt_source_file_name'(FilePath, Directory, Name, Extension, SourceFile) :-
 	'$lgt_prolog_os_file_name'(NormalizedPath, FilePath),
-	'$lgt_expand_path'(NormalizedPath, SourceFile0),
+	(	sub_atom(NormalizedPath, 0, 1, _, '/') ->
+		SourceFile0 = NormalizedPath
+	;	(	'$lgt_compiler_working_directory'(Prefix),
+			atom_concat(Prefix, NormalizedPath, SourceFile0)
+		;	'$lgt_expand_path'(NormalizedPath, SourceFile0)
+		)
+	),
+%	writeln(SourceFile0),
+%	'$lgt_expand_path'(NormalizedPath, SourceFile0),
 	'$lgt_decompose_file_name'(SourceFile0, Directory, Name0, Extension0),
 	(	% file extensions are defined in the Prolog adapter files (there
 		% might be multiple extensions defined for the same type of file)
@@ -7875,10 +7883,10 @@ create_logtalk_flag(Flag, Value, Options) :-
 	% support the Logtalk term-expansion mechanism
 	'$lgt_comp_ctx_mode'(Ctx, Mode),
 	'$lgt_read_file_to_terms'(Mode, File, Directory, Path, Terms),
-	'$lgt_current_directory'(Current),
-	'$lgt_change_directory'(Directory),
+	'$lgt_compiler_working_directory'(Current),
+	'$lgt_compiler_change_directory'(Directory),
 	'$lgt_compile_file_terms'(Terms, Path, Ctx),
-	'$lgt_change_directory'(Current).
+	'$lgt_compiler_change_directory'(Current).
 
 '$lgt_compile_file_directive'(initialization(Goal), Ctx) :-
 	!,
@@ -8018,13 +8026,13 @@ create_logtalk_flag(Flag, Value, Options) :-
 '$lgt_compile_logtalk_directive'(include(File), Ctx) :-
 	'$lgt_comp_ctx_mode'(Ctx, Mode),
 	'$lgt_read_file_to_terms'(Mode, File, Directory, Path, Terms),
-	'$lgt_current_directory'(Current),
-	'$lgt_change_directory'(Directory),
+	'$lgt_compiler_working_directory'(Current),
+	'$lgt_compiler_change_directory'(Directory),
 	(	Mode == runtime ->
 		'$lgt_compile_runtime_terms'(Terms, Path)
 	;	'$lgt_compile_file_terms'(Terms, Path, Ctx)
 	),
-	'$lgt_change_directory'(Current).
+	'$lgt_compiler_change_directory'(Current).
 
 % object opening and closing directives
 
@@ -20847,6 +20855,21 @@ create_logtalk_flag(Flag, Value, Options) :-
 	'$lgt_sum_list'(Values, Sum1, Sum).
 
 
+'$lgt_set_compiler_working_directory' :-
+	'$lgt_current_directory'(Directory),
+	retractall('$lgt_pp_working_directory_'(_)),
+	assertz('$lgt_pp_working_directory_'(Directory)).
+
+
+'$lgt_compiler_working_directory'(Directory) :-
+	'$lgt_pp_working_directory_'(Directory).
+
+
+'$lgt_compiler_change_directory'(Directory) :-
+	retractall('$lgt_pp_working_directory_'(_)),
+	assertz('$lgt_pp_working_directory_'(Directory)).
+
+
 '$lgt_read_file_to_terms'(Mode, File, Directory, SourceFile, Terms) :-
 	% check file specification and expand library notation if used
 	catch(
@@ -21740,6 +21763,7 @@ create_logtalk_flag(Flag, Value, Options) :-
 % Logtalk runtime initialization
 
 '$lgt_runtime_initialization' :-
+	'$lgt_set_compiler_working_directory',
 	'$lgt_initialize_dynamic_entity_counters',
 	'$lgt_load_built_in_entities'(ScratchDirectory),
 	'$lgt_load_settings_file'(ScratchDirectory, Result),
