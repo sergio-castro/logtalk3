@@ -6083,10 +6083,10 @@ create_logtalk_flag(Flag, Value, Options) :-
 '$lgt_source_file_name'(FilePath, Directory, Name, Extension, SourceFile) :-
 	'$lgt_prolog_os_file_name'(NormalizedPath, FilePath),
 	sub_atom(NormalizedPath, 0, 1, _, First),
-	(	First == '/' ->
+	(	First == ('/') ->
 		% absolute path
 		SourceFile0 = NormalizedPath
-	;	First == '$' ->
+	;	First == ('$') ->
 		% environment variable
 		'$lgt_expand_path'(NormalizedPath, SourceFile0)
 	;	% relative path
