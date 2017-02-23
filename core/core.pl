@@ -229,6 +229,12 @@
 :- dynamic('$lgt_user_defined_flag_'/3).
 
 
+% current working directory
+
+% '$lgt_working_directory_'(Directory)
+:- dynamic('$lgt_working_directory_'/1).
+
+
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -6076,15 +6082,21 @@ create_logtalk_flag(Flag, Value, Options) :-
 
 '$lgt_source_file_name'(FilePath, Directory, Name, Extension, SourceFile) :-
 	'$lgt_prolog_os_file_name'(NormalizedPath, FilePath),
-	(	sub_atom(NormalizedPath, 0, 1, _, '/') ->
+	sub_atom(NormalizedPath, 0, 1, _, First),
+	(	First == '/' ->
+		% absolute path
 		SourceFile0 = NormalizedPath
-	;	(	'$lgt_compiler_working_directory'(Prefix),
+	;	First == '$' ->
+		% environment variable
+		'$lgt_expand_path'(NormalizedPath, SourceFile0)
+	;	% relative path
+		(	% try first to find the source file in Logtalk working directory
+			'$lgt_compiler_working_directory'(Prefix),
 			atom_concat(Prefix, NormalizedPath, SourceFile0)
-		;	'$lgt_expand_path'(NormalizedPath, SourceFile0)
+		;	% as last resort, try to find the source file in Prolog working directory
+			'$lgt_expand_path'(NormalizedPath, SourceFile0)
 		)
 	),
-%	writeln(SourceFile0),
-%	'$lgt_expand_path'(NormalizedPath, SourceFile0),
 	'$lgt_decompose_file_name'(SourceFile0, Directory, Name0, Extension0),
 	(	% file extensions are defined in the Prolog adapter files (there
 		% might be multiple extensions defined for the same type of file)
@@ -20856,18 +20868,22 @@ create_logtalk_flag(Flag, Value, Options) :-
 
 
 '$lgt_set_compiler_working_directory' :-
-	'$lgt_current_directory'(Directory),
-	retractall('$lgt_pp_working_directory_'(_)),
-	assertz('$lgt_pp_working_directory_'(Directory)).
+	'$lgt_current_directory'(Directory0),
+	(	sub_atom(Directory0, _, 1, 0, '/') ->
+		Directory = Directory0
+	;	atom_concat(Directory0, '/', Directory)
+	),
+	retractall('$lgt_working_directory_'(_)),
+	assertz('$lgt_working_directory_'(Directory)).
 
 
 '$lgt_compiler_working_directory'(Directory) :-
-	'$lgt_pp_working_directory_'(Directory).
+	'$lgt_working_directory_'(Directory).
 
 
 '$lgt_compiler_change_directory'(Directory) :-
-	retractall('$lgt_pp_working_directory_'(_)),
-	assertz('$lgt_pp_working_directory_'(Directory)).
+	retractall('$lgt_working_directory_'(_)),
+	assertz('$lgt_working_directory_'(Directory)).
 
 
 '$lgt_read_file_to_terms'(Mode, File, Directory, SourceFile, Terms) :-
