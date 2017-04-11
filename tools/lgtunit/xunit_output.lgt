@@ -18,6 +18,9 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 
+:- create_logtalk_flag(supress_prefix, '', [type(atom), keep(true)]).
+
+
 :- object(xunit_output).
 
 	:- info([
@@ -135,14 +138,24 @@
 		message_cache_(tests_results_summary(Tests, Skipped, _, Failures, _)).
 
 	testsuite_name(Name) :-
-		message_cache_(running_tests_from_object_file(_, Name)).
+		message_cache_(running_tests_from_object_file(_, File)),
+		current_logtalk_flag(supress_prefix, Prefix),
+		(	atom_concat(Prefix, Name, File) ->
+			true
+		;	Name = File
+		).
 
 	testsuite_package(Package) :-
 		message_cache_(running_tests_from_object_file(Object, File)),
 		(	logtalk::loaded_file_property(File, library(Library)) ->
 			Package = library(Library)
 		;	% use the file directory
-			object_property(Object, file(_,Package))
+			object_property(Object, file(_,Directory)),
+			current_logtalk_flag(supress_prefix, Prefix),
+			(	atom_concat(Prefix, Package, Directory) ->
+				true
+			;	Package = Directory
+			)
 		).
 
 	testsuite_time(Time) :-

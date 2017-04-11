@@ -18,6 +18,9 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 
+:- create_logtalk_flag(supress_prefix, '', [type(atom), keep(true)]).
+
+
 :- object(coverage_report).
 
 	:- info([
@@ -59,7 +62,11 @@
 		write(coverage_report, '<!DOCTYPE cover SYSTEM "coverage_report.dtd">'), nl(coverage_report),
 		write(coverage_report, '<?xml-stylesheet type="text/xsl" href="coverage_report.xsl"?>'), nl(coverage_report),
 		write_xml_open_tag(cover),
-		write_xml_element(testsuite, File),
+		current_logtalk_flag(supress_prefix, Prefix),
+		(	atom_concat(Prefix, Suffix, File) ->
+			write_xml_element(testsuite, Suffix)
+		;	write_xml_element(testsuite, File)
+		),
 		write_xml_element(object, Object),
 		timestamp_(Year, Month, Day, Hours, Minutes, Seconds),
 		date_time_to_timestamp(Year, Month, Day, Hours, Minutes, Seconds, TimeStamp),

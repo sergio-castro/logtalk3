@@ -18,6 +18,9 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 
+:- create_logtalk_flag(supress_prefix, '', [type(atom), keep(true)]).
+
+
 :- object(tap_report).
 
 	:- info([
