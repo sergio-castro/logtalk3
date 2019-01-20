@@ -27,35 +27,15 @@ public class LogtalkVisitor extends PsiElementVisitor {
     visitPsiElement(o);
   }
 
-  public void visitCustomBinaryOperation(@NotNull LogtalkCustomBinaryOperation o) {
-    visitPsiElement(o);
-  }
-
-  public void visitCustomLeftOperation(@NotNull LogtalkCustomLeftOperation o) {
-    visitPsiElement(o);
-  }
-
-  public void visitKnownBinaryOperator(@NotNull LogtalkKnownBinaryOperator o) {
-    visitPsiElement(o);
-  }
-
-  public void visitKnownLeftOperator(@NotNull LogtalkKnownLeftOperator o) {
-    visitPsiElement(o);
-  }
-
   public void visitList(@NotNull LogtalkList o) {
     visitPsiElement(o);
   }
 
-  public void visitMapReference(@NotNull LogtalkMapReference o) {
+  public void visitMapName(@NotNull LogtalkMapName o) {
     visitPsiElement(o);
   }
 
-  public void visitNativeBinaryOperation(@NotNull LogtalkNativeBinaryOperation o) {
-    visitPsiElement(o);
-  }
-
-  public void visitNativeLeftOperation(@NotNull LogtalkNativeLeftOperation o) {
+  public void visitMapTerm(@NotNull LogtalkMapTerm o) {
     visitPsiElement(o);
   }
 
@@ -64,10 +44,6 @@ public class LogtalkVisitor extends PsiElementVisitor {
   }
 
   public void visitOperation(@NotNull LogtalkOperation o) {
-    visitPsiElement(o);
-  }
-
-  public void visitOperator(@NotNull LogtalkOperator o) {
     visitPsiElement(o);
   }
 
@@ -80,10 +56,6 @@ public class LogtalkVisitor extends PsiElementVisitor {
   }
 
   public void visitTerm(@NotNull LogtalkTerm o) {
-    visitPsiElement(o);
-  }
-
-  public void visitValidOperator(@NotNull LogtalkValidOperator o) {
     visitPsiElement(o);
   }
 

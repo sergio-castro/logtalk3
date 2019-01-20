@@ -1,7 +1,7 @@
 ________________________________________________________________________
 
 This file is part of Logtalk <https://logtalk.org/>  
-Copyright 2017 Sergio Castro <sergioc78@gmail.com> and  
+Copyright 2019 Sergio Castro <sergioc78@gmail.com> and  
 Paulo Moura <pmoura@logtalk.org>
 
 Licensed under the Apache License, Version 2.0 (the "License");
